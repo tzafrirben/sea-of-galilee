@@ -26,7 +26,7 @@
 ;;; download new surveys and compare with existing surveys
 (let [in-file (first *command-line-args*)
       history (json/parse-string (slurp in-file) true)
-      api-url (str data-gov-url "?resource_id=" data-gov-env "&limit=5")
+      api-url (str data-gov-url "?resource_id=" data-gov-env "&limit=15")
       {:keys [exit err out]} (shell/sh
                               "curl" "-s"
                               "-H" "Accept: application/json"
