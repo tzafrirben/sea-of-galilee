@@ -2,6 +2,7 @@
 (ns update-surveys
   (:require
    [clojure.java.shell :as shell]
+   [clojure.edn :as edn]
    [clojure.set :as set]
    [clojure.string :as string]
    [cheshire.core :as json])
@@ -43,7 +44,7 @@
                                            :Kinneret_Level :level}))
                                  (map format-date)
                                  (map (fn [record]
-                                        (update record :level #(string/trim %)))))
+                                        (update record :level #(edn/read-string (string/trim %))))))
                 new-records (remove-existing-records history api-records)]
             (if (seq new-records)
               (let [updated-history (sort #(let [d1 (LocalDate/parse (:date %1) date-pattern)
