@@ -1,0 +1,116 @@
+<!doctype html>
+<html>
+<head>
+  <title>Sea of Galilee water level history</title>
+  <meta content="text/html;charset=utf-8" http-equiv="Content-Type">
+  <meta content="utf-8" http-equiv="encoding">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@2.9.4/dist/Chart.bundle.js"
+    integrity="sha256-MwuaABKOZBmQ/lAvt5Y2+IPc+I4LP33TTpcv/3Jv/X8=" crossorigin="anonymous">
+  </script>
+  
+</head>
+
+<body>
+  <div style="width:90%;">
+    <canvas id="canvas"></canvas>
+  </div>
+  <script>
+    const aggByMonth = (history) => {
+      var agg = new Map();
+      history.forEach(h => {
+        const date = new Date(h.date);
+        const dKey = date.getFullYear() + '-' + (date.getMonth() + 1) + '-01';
+        
+        if(!agg.has(dKey)) {
+          agg.set(dKey, new Array());
+        }
+        agg.get(dKey).push(h.level);
+      });
+
+      const arr = new Array();
+      agg.forEach((ls, d) => {
+        const total = ls.reduce((sum, l) => { return sum + l; });
+        const average = (total / ls.length).toFixed(3);
+
+        arr.push({date: new Date(d), level: average});
+      });
+
+      return arr;
+    }
+
+    const aggByYear = (history) => {
+        var agg = new Map();
+        history.forEach(h => {
+          const date = new Date(h.date);
+          const dKey = date.getFullYear() + '-06-01';
+
+          if (!agg.has(dKey)) {
+            agg.set(dKey, new Array());
+          }
+          agg.get(dKey).push(h.level);
+        });
+
+        const arr = new Array();
+        agg.forEach((ls, d) => {
+          const total = ls.reduce((sum, l) => { return sum + l; });
+          const average = (total / ls.length).toFixed(3);
+
+          arr.push({ date: new Date(d), level: average });
+        });
+
+        return arr;
+    }
+
+    var config = {
+      type: 'line',
+      data: {
+      datasets: [{
+        label: 'Sea of Galilee water level (average by year)',
+        borderColor: 'rgba(54, 162, 235)',
+        fill: false,
+        pointStyle: 'line',
+        data: []
+      }]
+    },
+    options: {
+      scales: {
+        xAxes: [{
+          type: 'time',
+          time: {
+            unit: 'year'
+          }
+        }],
+        yAxes: [{
+          ticks: {
+            suggestedMin: -216
+          }
+        }]
+      }
+    }
+  };
+
+    window.onload = function () {
+      window.fetch('https://tzafrirben.github.io/sea-of-galilee/surveys.json')
+        .then(res => res.json())
+        .then((history) => {
+          console.log("num of history " + history.length);
+          var chartData = config.data.datasets[0].data;
+          const dates = history.map(h => new Date(h.date));
+          
+          const data = aggByYear(history);
+
+          data.forEach(d => {
+            //const d = new Date(h.date);
+            //if (d >= new Date('2016-01-01')) {
+              chartData.push({ x: d.date, y: d.level });
+            //}
+          });
+
+          var ctx = document.getElementById('canvas').getContext('2d');
+          window.myLine = new Chart(ctx, config);
+        }).catch(err => console.error(err));
+    };
+  </script>
+</body>
+
+</html>
