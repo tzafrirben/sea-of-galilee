@@ -1,0 +1,265 @@
+<!doctype html>
+<html>
+<head>
+  <title>Sea of Galilee water level history</title>
+  <meta content="text/html;charset=utf-8" http-equiv="Content-Type">
+  <meta content="utf-8" http-equiv="encoding">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.13.0/moment.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@2.9.4/dist/Chart.min.js"
+    integrity="sha256-t9UJPrESBeG2ojKTIcFLPGF7nHi2vEc7f5A2KpH/UBU=" crossorigin="anonymous">
+  </script>
+  <style>
+    .btn {
+      background: #3498db;
+      border-radius: 0px;
+      color: #ffffff;
+      font-size: 12px;
+      padding: 2px 2px 2px 2px;
+      text-decoration: none;
+      height: 30px;
+      width: 70px;
+      margin-top: 5px;
+      margin-bottom: 5px;
+    }
+  
+    .btn.active {
+      background: #cecece;
+      text-decoration: none;
+    }
+  </style>
+</head>
+
+<body>
+  <div style="width:85%;">
+    <canvas id="canvas"></canvas>
+  </div>
+  <button id="year" class="btn active">Year</button>
+  <button id="month" class="btn">Month</button>
+  <button id="day" class="btn">Day</button>
+
+  <script>
+    const aggHistory = (agg) => {
+      const arr = new Array();
+      agg.forEach((ls, d) => {
+        const total = ls.reduce((sum, l) => { return sum + l; });
+        const average = (total / ls.length).toFixed(3);
+
+        arr.push({ date: new Date(d), level: average });
+      });
+
+      return arr;
+    };
+
+    const aggByMonth = (history) => {
+      var agg = new Map();
+      history.forEach(h => {
+        const date = new Date(h.date);
+        const dKey = date.getFullYear() + '-' + (date.getMonth() + 1) + '-01';
+        
+        if(!agg.has(dKey)) {
+          agg.set(dKey, new Array());
+        }
+        agg.get(dKey).push(h.level);
+      });
+
+      return aggHistory(agg);
+    };
+
+    const aggByYear = (history) => {
+        var agg = new Map();
+        history.forEach(h => {
+          const date = new Date(h.date);
+          const dKey = date.getFullYear() + '-06-01';
+
+          if (!agg.has(dKey)) {
+            agg.set(dKey, new Array());
+          }
+          agg.get(dKey).push(h.level);
+        });
+
+        return aggHistory(agg);
+    };
+
+    var config = {
+      type: 'line',
+      data: {
+        datasets: [{
+          label: 'Sea of Galilee water level (average by year)',
+          backgroundColor: Chart.helpers.color('rgb(54, 162, 235)').alpha(0.5).rgbString(),
+          borderColor: 'rgb(54, 162, 235)',
+          fill: false,
+          pointStyle: 'line',
+          data: []
+        }]
+      },
+      options: {
+        tooltips: {
+          callbacks: {
+            title: function (tooltipItems, data) {
+              var dateString = '';
+              tooltipItems.forEach(function (tooltipItem) {
+                const item = data.datasets[tooltipItem.datasetIndex].data[tooltipItem.index];
+                const date = new Date(item.x);
+
+                var format = '';
+                switch (state.mode) {
+                  case 'year':
+                    format = 'YYYY';
+                    break;
+                  case 'month':
+                    format = 'MMMM YYYY';
+                    break;
+                  case 'day':
+                    format = 'MMMM Do YYYY';
+                    break
+                }
+                dateString = moment(date).format(format)
+              });
+              return dateString;
+            },
+            label: function (tooltipItem, data) {
+              var level = data.datasets[tooltipItem.datasetIndex].data[tooltipItem.index].y;
+
+              var prefix = '';
+              switch (state.mode) {
+                case 'year':
+                  prefix = 'Average water level: ';
+                  break;
+                case 'month':
+                  prefix = 'Average water level: ';
+                  break;
+                case 'day':
+                  prefix = 'Water level: ';
+                  break
+              }
+              return prefix + level;
+            }
+          }
+        },
+        scales: {
+          xAxes: [{
+            type: 'time',
+            time: {
+              unit: 'year',
+              displayFormats: {
+                day: 'MMM YYYY'
+              }
+            }
+          }],
+          yAxes: [{
+            ticks: {
+              suggestedMin: -216
+            }
+          }]
+        }
+      }
+    };
+
+    document.getElementById('month').addEventListener('click', function () {
+      if (state.mode !== 'month') {
+        state.mode = 'month';
+
+        const allButtons = document.getElementsByClassName('btn');
+        for (let btn of allButtons) {
+          if (btn.id !== state.mode) {
+            btn.classList.remove('active');
+          } else {
+            btn.classList.add('active');
+          }
+        }
+
+        config.data.datasets[0].label = 'Sea of Galilee water level (average by ' + state.mode + ')';
+
+        config.data.datasets[0].data = [];
+
+        const data = aggByMonth(state.data);
+        data.forEach(d => {
+          config.data.datasets[0].data.push({ x: d.date, y: d.level });
+        });
+        
+        config.options.scales.xAxes[0].time.unit = state.mode;
+
+        window.myLine.update();
+      }
+    });
+
+    document.getElementById('day').addEventListener('click', function () {
+      if (state.mode !== 'day') {
+        state.mode = 'day';
+
+        const allButtons = document.getElementsByClassName('btn');
+        for (let btn of allButtons) {
+          if (btn.id !== state.mode) {
+            btn.classList.remove('active');
+          } else {
+            btn.classList.add('active');
+          }
+        }
+
+        config.data.datasets[0].label = 'Sea of Galilee water level';
+
+        config.data.datasets[0].data = [];
+
+        state.data.forEach(d => {
+          if (new Date(d.date) >= new Date('2010-01-01')) {
+            config.data.datasets[0].data.push({ x: d.date, y: d.level });
+          }
+        });
+
+        config.options.scales.xAxes[0].time.unit = state.mode;
+
+        window.myLine.update();
+      }
+    });
+
+    document.getElementById('year').addEventListener('click', function () {
+      if (state.mode !== 'year') {       
+        state.mode = 'year';
+
+        const allButtons = document.getElementsByClassName('btn');
+        for(let btn of allButtons) {
+          if (btn.id !== state.mode) {
+            btn.classList.remove('active');
+          } else {
+            btn.classList.add('active');
+          }
+        }
+
+        config.data.datasets[0].label = 'Sea of Galilee water level (average by ' + state.mode + ')';
+          
+        config.data.datasets[0].data = [];
+
+        const data = aggByYear(state.data);
+        data.forEach(d => {
+          config.data.datasets[0].data.push({ x: d.date, y: d.level });
+        });
+
+        config.options.scales.xAxes[0].time.unit = state.mode;
+
+        window.myLine.update();
+      }
+    });
+
+    var state = {mode: 'year', data: []};
+
+    window.onload = function () {
+      window.fetch('https://tzafrirben.github.io/sea-of-galilee/surveys.json')
+        .then(res => res.json())
+        .then((history) => {
+          state.data = history;
+
+          const data = aggByYear(state.data);
+
+          var chartData = config.data.datasets[0].data;    
+          data.forEach(d => {
+            chartData.push({ x: d.date, y: d.level });
+          });
+
+          var ctx = document.getElementById('canvas').getContext('2d');
+          window.myLine = new Chart(ctx, config);
+        }).catch(err => console.error(err));
+    };
+  </script>
+</body>
+
+</html>
