@@ -7,7 +7,6 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js@2.9.4/dist/Chart.bundle.js"
     integrity="sha256-MwuaABKOZBmQ/lAvt5Y2+IPc+I4LP33TTpcv/3Jv/X8=" crossorigin="anonymous">
   </script>
-  
 </head>
 
 <body>
@@ -36,7 +35,7 @@
       });
 
       return arr;
-    }
+    };
 
     const aggByYear = (history) => {
         var agg = new Map();
@@ -59,25 +58,46 @@
         });
 
         return arr;
-    }
+    };
 
     var config = {
       type: 'line',
       data: {
       datasets: [{
         label: 'Sea of Galilee water level (average by year)',
-        borderColor: 'rgba(54, 162, 235)',
+        backgroundColor: Chart.helpers.color('rgb(54, 162, 235)').alpha(0.5).rgbString(),
+        borderColor: 'rgb(54, 162, 235)',
         fill: false,
         pointStyle: 'line',
         data: []
       }]
     },
     options: {
+      tooltips: {
+        callbacks: {
+          title: function (tooltipItems, data) {
+            var year = '';
+            tooltipItems.forEach(function (tooltipItem) {
+              const item = data.datasets[tooltipItem.datasetIndex].data[tooltipItem.index];
+              const date = new Date(item.x);
+
+              year = date.getFullYear();
+              
+            });
+            return year;
+          },
+          label: function (tooltipItem, data) {
+            var level = data.datasets[tooltipItem.datasetIndex].data[tooltipItem.index].y;
+            return 'Average water level: ' + level;
+          }
+        }
+      },
       scales: {
         xAxes: [{
           type: 'time',
           time: {
-            unit: 'year'
+            unit: 'year',
+            tooltipFormat: 'YYYY',
           }
         }],
         yAxes: [{
@@ -93,17 +113,13 @@
       window.fetch('https://tzafrirben.github.io/sea-of-galilee/surveys.json')
         .then(res => res.json())
         .then((history) => {
-          console.log("num of history " + history.length);
           var chartData = config.data.datasets[0].data;
           const dates = history.map(h => new Date(h.date));
           
           const data = aggByYear(history);
 
           data.forEach(d => {
-            //const d = new Date(h.date);
-            //if (d >= new Date('2016-01-01')) {
-              chartData.push({ x: d.date, y: d.level });
-            //}
+            chartData.push({ x: d.date, y: d.level });
           });
 
           var ctx = document.getElementById('canvas').getContext('2d');
