@@ -10,33 +10,33 @@
   </script>
   <style>
     .btn {
-      background: #3498db;
-      border-radius: 0px;
-      color: #ffffff;
-      font-size: 12px;
-      padding: 2px 2px 2px 2px;
+      background-color: rgb(54, 162, 235);
+      border: none;
+      color: white;
+      padding: 15px 32px;
+      text-align: center;
       text-decoration: none;
-      height: 30px;
-      width: 70px;
-      margin-top: 5px;
-      margin-bottom: 5px;
+      display: inline-block;
+      font-size: 16px;
     }
   
     .btn.active {
-      background: #cecece;
-      text-decoration: none;
+      background: rgb(2, 50, 82);
     }
   </style>
 </head>
 
 <body>
-  <div style="width:85%;">
-    <canvas id="canvas"></canvas>
+  <div style="width:70%;margin:2% auto;">
+    <div>
+      <canvas id="canvas"></canvas>
+    </div>
+    <div style="margin-top: 2%;text-align: center;">
+      <button id="year" class="btn active">Year</button>
+      <button id="month" class="btn">Month</button>
+      <button id="day" class="btn">Day</button>
+    </div>
   </div>
-  <button id="year" class="btn active">Year</button>
-  <button id="month" class="btn">Month</button>
-  <button id="day" class="btn">Day</button>
-
   <script>
     const aggHistory = (agg) => {
       const arr = new Array();
@@ -84,7 +84,7 @@
       type: 'line',
       data: {
         datasets: [{
-          label: 'Sea of Galilee water level (average by year)',
+          label: 'Average by year',
           backgroundColor: Chart.helpers.color('rgb(54, 162, 235)').alpha(0.5).rgbString(),
           borderColor: 'rgb(54, 162, 235)',
           fill: false,
@@ -93,11 +93,24 @@
         }]
       },
       options: {
+        title: {
+          display: true,
+          text: 'Sea of Galilee water level',
+          fontSize: 30,
+        },
+        legend: {
+          labels: {
+            fontSize: 19
+          },
+          onClick: (e, legendItem) => {
+            return false;
+          }
+        },
         tooltips: {
           callbacks: {
-            title: function (tooltipItems, data) {
+            title: (tooltipItems, data) => {
               var dateString = '';
-              tooltipItems.forEach(function (tooltipItem) {
+              tooltipItems.forEach((tooltipItem) => {
                 const item = data.datasets[tooltipItem.datasetIndex].data[tooltipItem.index];
                 const date = new Date(item.x);
 
@@ -117,14 +130,12 @@
               });
               return dateString;
             },
-            label: function (tooltipItem, data) {
+            label: (tooltipItem, data) => {
               var level = data.datasets[tooltipItem.datasetIndex].data[tooltipItem.index].y;
 
               var prefix = '';
               switch (state.mode) {
                 case 'year':
-                  prefix = 'Average water level: ';
-                  break;
                 case 'month':
                   prefix = 'Average water level: ';
                   break;
@@ -155,9 +166,9 @@
       }
     };
 
-    document.getElementById('month').addEventListener('click', function () {
-      if (state.mode !== 'month') {
-        state.mode = 'month';
+    const updateTimeUnit = (unit, label) => {
+      if (state.mode !== unit) {
+        state.mode = unit;
 
         const allButtons = document.getElementsByClassName('btn');
         for (let btn of allButtons) {
@@ -168,68 +179,24 @@
           }
         }
 
-        config.data.datasets[0].label = 'Sea of Galilee water level (average by ' + state.mode + ')';
+        config.data.datasets[0].label = (label === undefined) ?
+          'Average by ' + state.mode: label;
 
         config.data.datasets[0].data = [];
 
-        const data = aggByMonth(state.data);
-        data.forEach(d => {
-          config.data.datasets[0].data.push({ x: d.date, y: d.level });
-        });
-        
-        config.options.scales.xAxes[0].time.unit = state.mode;
-
-        window.myLine.update();
-      }
-    });
-
-    document.getElementById('day').addEventListener('click', function () {
-      if (state.mode !== 'day') {
-        state.mode = 'day';
-
-        const allButtons = document.getElementsByClassName('btn');
-        for (let btn of allButtons) {
-          if (btn.id !== state.mode) {
-            btn.classList.remove('active');
-          } else {
-            btn.classList.add('active');
-          }
+        var data = [];
+        switch (state.mode) {
+          case 'year':
+            data = aggByYear(state.data);
+            break;
+          case 'month':
+            data = aggByMonth(state.data);
+            break;
+          case 'day':
+            data = state.data;
+            break
         }
 
-        config.data.datasets[0].label = 'Sea of Galilee water level';
-
-        config.data.datasets[0].data = [];
-
-        state.data.forEach(d => {
-          if (new Date(d.date) >= new Date('2010-01-01')) {
-            config.data.datasets[0].data.push({ x: d.date, y: d.level });
-          }
-        });
-
-        config.options.scales.xAxes[0].time.unit = state.mode;
-
-        window.myLine.update();
-      }
-    });
-
-    document.getElementById('year').addEventListener('click', function () {
-      if (state.mode !== 'year') {       
-        state.mode = 'year';
-
-        const allButtons = document.getElementsByClassName('btn');
-        for(let btn of allButtons) {
-          if (btn.id !== state.mode) {
-            btn.classList.remove('active');
-          } else {
-            btn.classList.add('active');
-          }
-        }
-
-        config.data.datasets[0].label = 'Sea of Galilee water level (average by ' + state.mode + ')';
-          
-        config.data.datasets[0].data = [];
-
-        const data = aggByYear(state.data);
         data.forEach(d => {
           config.data.datasets[0].data.push({ x: d.date, y: d.level });
         });
@@ -238,11 +205,23 @@
 
         window.myLine.update();
       }
+    };
+
+    document.getElementById('month').addEventListener('click', () => {
+      updateTimeUnit('month');
+    });
+
+    document.getElementById('day').addEventListener('click', () => {
+      updateTimeUnit('day', 'Daily measurement');
+    });
+
+    document.getElementById('year').addEventListener('click', () => {
+      updateTimeUnit('year');
     });
 
     var state = {mode: 'year', data: []};
 
-    window.onload = function () {
+    window.onload = () => {
       window.fetch('https://tzafrirben.github.io/sea-of-galilee/surveys.json')
         .then(res => res.json())
         .then((history) => {
