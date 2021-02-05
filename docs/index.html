@@ -38,6 +38,10 @@
     </div>
   </div>
   <script>
+    const UPPER_RED_LINE = -208.80;
+    const LOWER_RED_LINE = -213.00;
+    const BLACK_LINE     = -214.87;
+
     const aggHistory = (agg) => {
       const arr = new Array();
       agg.forEach((ls, d) => {
@@ -84,9 +88,32 @@
       type: 'line',
       data: {
         datasets: [{
-          label: 'Average by year',
+          label: 'Year average',
           backgroundColor: Chart.helpers.color('rgb(54, 162, 235)').alpha(0.5).rgbString(),
           borderColor: 'rgb(54, 162, 235)',
+          fill: false,
+          pointStyle: 'line',
+          pointRadius: 2,
+          pointStyle: 'circle',
+          data: []
+        },
+        {
+          label: 'Upper red line (' + UPPER_RED_LINE + ')',
+          borderColor: 'rgb(255, 99, 132)',
+          fill: false,
+          pointStyle: 'line',
+          data: []
+        }, 
+        {
+          label: 'Lower red line (' + LOWER_RED_LINE + ')',
+          borderColor: 'rgb(255, 99, 132)',
+          fill: false,
+          pointStyle: 'line',
+          data: []
+        },
+        {
+          label: 'Black line (' + BLACK_LINE + ')',
+          borderColor: 'rgb(0, 0, 0)',
           fill: false,
           pointStyle: 'line',
           data: []
@@ -95,7 +122,7 @@
       options: {
         title: {
           display: true,
-          text: 'Sea of Galilee water level',
+          text: 'Sea of Galilee water level (meters)',
           fontSize: 30,
         },
         legend: {
@@ -103,7 +130,16 @@
             fontSize: 19
           },
           onClick: (e, legendItem) => {
-            return false;
+            const index = legendItem.datasetIndex;
+
+            if(index === 0) {
+              return false;
+            }
+          
+            const meta = window.myLine.getDatasetMeta(index);
+            meta.hidden = meta.hidden === null ? !window.myLine.data.datasets[index].hidden : null;
+
+            window.myLine.update();
           }
         },
         tooltips: {
@@ -159,14 +195,15 @@
           }],
           yAxes: [{
             ticks: {
-              suggestedMin: -216
+              suggestedMin: -216,
+              suggestedMax: -208
             }
           }]
         }
       }
     };
 
-    const updateTimeUnit = (unit, label) => {
+    const updateTimeUnit = (unit) => {
       if (state.mode !== unit) {
         state.mode = unit;
 
@@ -179,20 +216,24 @@
           }
         }
 
-        config.data.datasets[0].label = (label === undefined) ?
-          'Average by ' + state.mode: label;
-
         config.data.datasets[0].data = [];
 
-        var data = [];
+        var data   = [];
+        var radius = 1;
+        var label  = '';
+        
         switch (state.mode) {
           case 'year':
+            radius = 3;
+            label = 'Year average'
             data = aggByYear(state.data);
             break;
           case 'month':
+            label = 'Month average'
             data = aggByMonth(state.data);
             break;
           case 'day':
+            label = 'Daily measurement';
             data = state.data;
             break
         }
@@ -201,6 +242,9 @@
           config.data.datasets[0].data.push({ x: d.date, y: d.level });
         });
 
+        config.data.datasets[0].label = label;
+
+        config.data.datasets[0].pointRadius = radius;
         config.options.scales.xAxes[0].time.unit = state.mode;
 
         window.myLine.update();
@@ -212,7 +256,7 @@
     });
 
     document.getElementById('day').addEventListener('click', () => {
-      updateTimeUnit('day', 'Daily measurement');
+      updateTimeUnit('day');
     });
 
     document.getElementById('year').addEventListener('click', () => {
@@ -229,9 +273,15 @@
 
           const data = aggByYear(state.data);
 
-          var chartData = config.data.datasets[0].data;    
+          var waterLine = config.data.datasets[0].data;
+          var upperLine = config.data.datasets[1].data;
+          var lowerLine = config.data.datasets[2].data;
+          var blackLine = config.data.datasets[3].data;
           data.forEach(d => {
-            chartData.push({ x: d.date, y: d.level });
+            waterLine.push({ x: d.date, y: d.level });
+            upperLine.push({ x: d.date, y: UPPER_RED_LINE });
+            lowerLine.push({ x: d.date, y: LOWER_RED_LINE });
+            blackLine.push({ x: d.date, y: BLACK_LINE });
           });
 
           var ctx = document.getElementById('canvas').getContext('2d');
