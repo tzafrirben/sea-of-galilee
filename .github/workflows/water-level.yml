@@ -27,7 +27,7 @@ jobs:
         with:
           author_name: Tzafrir Ben Ami
           author_email: tzafrirben@gmail.com
-          message: "update surveys history daily action ${{steps.date.outputs.date}}"
+          message: "update surveys history daily action ${{ steps.date.outputs.date }}"
           add: "docs/surveys.json"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
