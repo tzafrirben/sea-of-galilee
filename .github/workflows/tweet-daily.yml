@@ -1,7 +1,7 @@
 name: Tweet water level
 on:
   schedule:
-    - cron: '30 15 * * *'
+    - cron: '30 14 * * *'
 jobs:
   tweet:
     runs-on: ubuntu-latest

@@ -1,7 +1,7 @@
 name: Water level history
 on:
   schedule:
-    - cron: '00 15 * * *'
+    - cron: '00 14 * * *'
 jobs:
   update-history:
     runs-on: ubuntu-latest
@@ -9,7 +9,7 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v2
-      - name: Download latest surveys
+      - name: Download measurements
         uses: tzafrirben/babashka-docker-action@v0.3
         id: download_surveys
         env:
