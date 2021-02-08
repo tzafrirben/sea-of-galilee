@@ -1,15 +1,11 @@
 name: Tweet water level
-on:
-  schedule:
-    - cron: '30 14 * * *'
+on: 'push'
 jobs:
   tweet:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v2
-        with:
-          ref: 'twitter-bot'
       - name: Build twitter message
         uses: tzafrirben/babashka-docker-action@v0.3
         id: twitter_message
