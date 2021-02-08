@@ -12,3 +12,6 @@ If there are new records, they are committed and pushed into the repo under [doc
 
 #### GitHub Pages
 Measurements are also rendered using [Chart.js](https://www.chartjs.org/) in [this](https://tzafrirben.github.io/sea-of-galilee) GitHub page
+
+### Read more (blog post)
+Read a more about this project in this [Medium blog post](https://tzafrirben.medium.com/github-actions-the-sea-of-galilee-and-a-twitter-bot-afa87a3fc995)
