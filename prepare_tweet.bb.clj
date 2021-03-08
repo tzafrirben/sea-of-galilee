@@ -58,7 +58,7 @@
         year  (format-date date "YYY")
         month (format-date date "MMM")
         tweet (localized "tweet" lang)
-        gap   (int (* 100 (- upper-red-line level)))]
+        gap   (Math/round (* 100 (- upper-red-line level)))]
     (format tweet
             (localized week lang)
             day
