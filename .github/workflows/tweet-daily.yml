@@ -9,7 +9,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2
       - name: Build twitter message
-        uses: tzafrirben/babashka-docker-action@v0.3
+        uses: tzafrirben/babashka-docker-action@v1.1
         id: twitter_message
         env:
           UPPER_RED_LINE: ${{ secrets.UPPER_RED_LINE }}
