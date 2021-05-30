@@ -10,7 +10,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2
       - name: Download measurements
-        uses: tzafrirben/babashka-docker-action@v0.3
+        uses: tzafrirben/babashka-docker-action@v1.1
         id: download_surveys
         env:
           DATA_GOV_RESOURCE: ${{ secrets.DATA_GOV_RESOURCE }}
