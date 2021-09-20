@@ -2,9 +2,7 @@
 (ns update-surveys
   (:require
    [clojure.java.shell :as shell]
-   [clojure.edn :as edn]
    [clojure.set :as set]
-   [clojure.string :as string]
    [cheshire.core :as json])
   (:import [java.time LocalDate]
            [java.time.format DateTimeFormatter]))
@@ -24,6 +22,17 @@
   (let [dates (set (map :date existing-records))]
     (remove #(contains? dates (:date %)) api-records)))
 
+(defn filter-after-today-records
+  [api-records today]
+  (reduce 
+   (fn [records record]
+     (let [date (LocalDate/parse (:date record) date-pattern)]
+       (if (.isAfter date today)
+         records
+         (conj records record))))
+   []
+   api-records))
+
 ;;; download new surveys and compare with existing surveys
 (let [in-file (first *command-line-args*)
       history (json/parse-string (slurp in-file) true)
@@ -42,10 +51,10 @@
                                  (map #(set/rename-keys
                                         % {:Survey_Date    :date
                                            :Kinneret_Level :level}))
-                                 (map format-date)
-                                 (map (fn [record]
-                                        (update record :level #(edn/read-string (string/trim %))))))
-                new-records (remove-existing-records history api-records)]
+                                 (map format-date))
+                new-records (filter-after-today-records
+                             (remove-existing-records history api-records)
+                             (LocalDate/now))]
             (if (seq new-records)
               (let [updated-history (sort #(let [d1 (LocalDate/parse (:date %1) date-pattern)
                                                  d2 (LocalDate/parse (:date %2) date-pattern)]
