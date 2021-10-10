@@ -1,6 +1,7 @@
 #!/usr/bin/env bb
 (ns update-surveys
   (:require
+   [clojure.edn :as edn]
    [clojure.java.shell :as shell]
    [clojure.set :as set]
    [cheshire.core :as json])
@@ -51,7 +52,11 @@
                                  (map #(set/rename-keys
                                         % {:Survey_Date    :date
                                            :Kinneret_Level :level}))
-                                 (map format-date))
+                                 (map format-date)
+                                 (map (fn [{:keys [level] :as record}]
+                                        (if (string? level)
+                                          (assoc record :level (edn/read-string level))
+                                          record))))
                 new-records (filter-after-today-records
                              (remove-existing-records history api-records)
                              (LocalDate/now))]
